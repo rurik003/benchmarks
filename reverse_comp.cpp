@@ -20,14 +20,13 @@ constexpr std::array<char, 128> make_LUT()
 		*(it + (inputs[i])) = outputs[i];
 		*(it + ((inputs[i] + 32))) = outputs[i];
 	}
-	*(it + '\n') = '\n';
 	return ret;
 }
 
 constexpr auto lut = make_LUT();
 static const auto seq_len = 61;
 
-void reverse_comp_offset(char* start, char* end, const int offset, int num_rows)
+void process_by_row(char* start, char* end, const int offset, int num_rows)
 {
 	int rows = 0;
 	while (rows < num_rows) {
@@ -51,7 +50,7 @@ void reverse_comp_offset(char* start, char* end, const int offset, int num_rows)
 	}
 }
 
-void reverse_comp_offset_final(char* start, char* end, const int offset)
+void process_remaining(char* start, char* end, const int offset)
 {
 	while (start < end) {
 		for (int i = 1; (i < offset) && (start < end); ++i) {
@@ -79,7 +78,7 @@ void reverse_comp_offset_final(char* start, char* end, const int offset)
 void reverse_comp(char* start, char* end)
 {
 	static auto hwconcurrency = std::thread::hardware_concurrency();
-	static auto nthreads = (hwconcurrency == 0) ? 4 : hwconcurrency;
+	static int nthreads = (hwconcurrency == 0) ? 4 : hwconcurrency;
 	const auto nbytes = end - start;
 	const auto last_row = nbytes % seq_len;
 	const auto offset = (last_row) == 0 ? seq_len : (last_row);
@@ -93,11 +92,11 @@ void reverse_comp(char* start, char* end)
 	end -= 2;
 	unsigned int strides = 0;
 	std::vector<std::thread> threads;
-	for (unsigned int i = 0; i < (nthreads - 1); ++i) {
-		threads.push_back(std::thread(reverse_comp_offset, start + strides, end - strides, offset, rows_per_thread[i]));
+	for (int i = 0; i < (nthreads - 1); ++i) {
+		threads.push_back(std::thread(process_by_row, start + strides, end - strides, offset, rows_per_thread[i]));
 		strides += rows_per_thread[i] * seq_len;
 	}
-	threads.push_back(std::thread(reverse_comp_offset_final, start + strides, end - strides, offset));
+	threads.push_back(std::thread(process_remaining, start + strides, end - strides, offset));
 	for (auto& t : threads)
 		t.join();
 }
@@ -126,7 +125,7 @@ int main()
 	breakpoints.push_back(input.get() + len);
 	
 	// perform reverse complement	
-	for (size_t i = 0; i < (breakpoints.size() - 1); ++i) {
+	for (int i = 0; i < (breakpoints.size() - 1); ++i) {
 		char* s = breakpoints[i];
 		while(*(++s) != '\n');
 		reverse_comp(++s, breakpoints[i+1]);
