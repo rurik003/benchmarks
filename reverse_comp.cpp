@@ -32,17 +32,17 @@ void reverse_comp_offset(char* start, char* end, const int offset, int num_rows)
 	int rows = 0;
 	while (rows < num_rows) {
 		for (int i = 1; (i < offset); ++i) {
-			*start = lut[*start];
-			*end = lut[*end];
-			std::swap(*start, *end);
+			char c = lut[*end];
+			*end = lut[*start];
+			*start = c;
 			++start;
 			--end;
 		}
 		--end;
 		for (int i = 0; (i < (seq_len - offset)); ++i) {
-			*start = lut[*start];
-			*end = lut[*end];
-			std::swap(*start, *end);
+			char c = lut[*end];
+			*end = lut[*start];
+			*start = c;
 			++start;
 			--end;
 		}
@@ -55,17 +55,17 @@ void reverse_comp_offset_final(char* start, char* end, const int offset)
 {
 	while (start < end) {
 		for (int i = 1; (i < offset) && (start < end); ++i) {
-			*start = lut[*start];
-			*end = lut[*end];
-			std::swap(*start, *end);
+			char c = lut[*end];
+			*end = lut[*start];
+			*start = c;
 			++start;
 			--end;
 		}
 		--end;
 		for (int i = 0; (i < (seq_len - offset)) && (start < end); ++i) {
-			*start = lut[*start];
-			*end = lut[*end];
-			std::swap(*start, *end);
+			char c = lut[*end];
+			*end = lut[*start];
+			*start = c;
 			++start;
 			--end;
 		}
