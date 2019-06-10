@@ -28,22 +28,19 @@ static const auto seq_len = 61;
 
 void process_by_row(char* start, char* end, const int offset, int num_rows)
 {
+	const int remaining = seq_len - offset - 1;
 	int rows = 0;
 	while (rows < num_rows) {
-		for (int i = 1; (i < offset); ++i) {
+		for (int i = 0; i < offset; ++i, ++start, --end) {
 			char c = lut[*end];
 			*end = lut[*start];
 			*start = c;
-			++start;
-			--end;
 		}
 		--end;
-		for (int i = 0; (i < (seq_len - offset)); ++i) {
+		for (int i = 0; i < remaining; ++i, ++start, --end) {
 			char c = lut[*end];
 			*end = lut[*start];
 			*start = c;
-			++start;
-			--end;
 		}
 		++start;
 		++rows;
@@ -52,21 +49,18 @@ void process_by_row(char* start, char* end, const int offset, int num_rows)
 
 void process_remaining(char* start, char* end, const int offset)
 {
+	const int remaining = seq_len - offset - 1;
 	while (start < end) {
-		for (int i = 1; (i < offset) && (start < end); ++i) {
+		for (int i = 0; (i < offset) && (start < end); ++i, ++start, --end) {
 			char c = lut[*end];
 			*end = lut[*start];
 			*start = c;
-			++start;
-			--end;
 		}
 		--end;
-		for (int i = 0; (i < (seq_len - offset)) && (start < end); ++i) {
+		for (int i = 0; (i < remaining) && (start < end); ++i, ++start, --end) {
 			char c = lut[*end];
 			*end = lut[*start];
 			*start = c;
-			++start;
-			--end;
 		}
 		++start;
 	}
@@ -93,10 +87,10 @@ void reverse_comp(char* start, char* end)
 	unsigned int strides = 0;
 	std::vector<std::thread> threads;
 	for (int i = 0; i < (nthreads - 1); ++i) {
-		threads.push_back(std::thread(process_by_row, start + strides, end - strides, offset, rows_per_thread[i]));
+		threads.push_back(std::thread(process_by_row, start + strides, end - strides, offset - 1, rows_per_thread[i]));
 		strides += rows_per_thread[i] * seq_len;
 	}
-	threads.push_back(std::thread(process_remaining, start + strides, end - strides, offset));
+	threads.push_back(std::thread(process_remaining, start + strides, end - strides, offset - 1));
 	for (auto& t : threads)
 		t.join();
 }
@@ -118,14 +112,14 @@ int main()
 	
 	// find locations of > to denote new entry
 	for (char* arrow = input.get(), *end = input.get() + len + 1;
-	(arrow = reinterpret_cast<char*>(memchr(arrow, '>', end - arrow))) != nullptr;
-	++arrow) {
+		(arrow = static_cast<char*>(memchr(arrow, '>', end - arrow))) != nullptr;
+		++arrow) {
 		breakpoints.emplace_back(arrow);
 	}
 	breakpoints.push_back(input.get() + len);
 	
 	// perform reverse complement	
-	for (int i = 0; i < (breakpoints.size() - 1); ++i) {
+	for (int i = 0; i < (static_cast<int>(breakpoints.size()) - 1); ++i) {
 		char* s = breakpoints[i];
 		while(*(++s) != '\n');
 		reverse_comp(++s, breakpoints[i+1]);
