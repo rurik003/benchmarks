@@ -10,6 +10,7 @@
 #include <cstring>
 #include <fcntl.h>
 
+//look up table of upper case and lower case conversions
 constexpr std::array<char, 128> make_LUT()
 {
 	const char inputs[] = "ACGTUMRWSYKVHDBN";
@@ -26,6 +27,7 @@ constexpr std::array<char, 128> make_LUT()
 constexpr auto lut = make_LUT();
 static const auto seq_len = 61;
 
+//perform reverse complement for num_rows rows
 void process_by_row(char* start, char* end, const int offset, int num_rows)
 {
 	const int remaining = seq_len - offset - 1;
@@ -47,6 +49,7 @@ void process_by_row(char* start, char* end, const int offset, int num_rows)
 	}
 }
 
+//perform reverse complement for remainder of sequence
 void process_remaining(char* start, char* end, const int offset)
 {
 	const int remaining = seq_len - offset - 1;
