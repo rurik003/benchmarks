@@ -27,7 +27,8 @@ constexpr std::array<char, 128> make_LUT()
 constexpr auto lut = make_LUT();
 static const auto seq_len = 61;
 
-//perform reverse complement for num_rows rows
+// perform reverse complement for num_rows rows
+// skip over new line characters by traversing data in strides
 void process_by_row(char* start, char* end, const int offset, int num_rows)
 {
 	const int remaining = seq_len - offset - 1;
@@ -49,7 +50,8 @@ void process_by_row(char* start, char* end, const int offset, int num_rows)
 	}
 }
 
-//perform reverse complement for remainder of sequence
+// perform reverse complement for remainder of sequence
+// skip over new line characters by traversing data in strides
 void process_remaining(char* start, char* end, const int offset)
 {
 	const int remaining = seq_len - offset - 1;
@@ -69,9 +71,7 @@ void process_remaining(char* start, char* end, const int offset)
 	}
 }
 
-// perform reverse complement
-// skip over new line characters by traversing data in strides
-// to eliminate branching
+// perform reverse complement using multiple threads
 void reverse_comp(char* start, char* end)
 {
 	static auto hwconcurrency = std::thread::hardware_concurrency();
@@ -90,10 +90,19 @@ void reverse_comp(char* start, char* end)
 	unsigned int strides = 0;
 	std::vector<std::thread> threads;
 	for (int i = 0; i < (nthreads - 1); ++i) {
-		threads.push_back(std::thread(process_by_row, start + strides, end - strides, offset - 1, rows_per_thread[i]));
+		threads.push_back(std::thread(process_by_row, 
+						start + strides,
+					       	end - strides,
+					       	offset - 1,
+					       	rows_per_thread[i]));
+
 		strides += rows_per_thread[i] * seq_len;
 	}
-	threads.push_back(std::thread(process_remaining, start + strides, end - strides, offset - 1));
+	threads.push_back(std::thread(process_remaining,
+					start + strides,
+				       	end - strides,
+				       	offset - 1));
+
 	for (auto& t : threads)
 		t.join();
 }
