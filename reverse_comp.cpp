@@ -1,3 +1,4 @@
+//Compile with -O3 -march=native -pthread -funroll-loops
 #include <iostream>
 #include <array>
 #include <vector>
