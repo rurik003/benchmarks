@@ -1,4 +1,8 @@
-//Compile with -O3 -march=native -pthread -funroll-loops
+// The Computer Language Benchmarks Game
+// https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
+//
+// Contributed by Will Rurik
+// Compile with -O3 -march=native -pthread -funroll-loops
 #include <iostream>
 #include <array>
 #include <vector>
@@ -110,6 +114,7 @@ void reverse_comp(char* start, char* end)
 
 int main()
 {
+	const auto BUF_SIZE = 8 * 1024 * 1024;
 	auto fd = fileno(stdin);
 	std::ios_base::sync_with_stdio(false);
 	std::cout.tie(nullptr);
@@ -121,7 +126,8 @@ int main()
 	fstat(fd, &stat_buf);
 	size_t len = stat_buf.st_size;
 	auto input = std::unique_ptr<char>(new char[len + 1]());
-	std::cin.read(input.get(), len);
+	
+	for (int i = 0; std::cin.read(input.get() + i, BUF_SIZE); i += BUF_SIZE);
 	
 	// find locations of > to denote new entry
 	for (char* arrow = input.get(), *end = input.get() + len + 1;
