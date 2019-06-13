@@ -125,7 +125,8 @@ int main()
 	// allocate buffer the same size as file and read from stdin
 	fstat(fd, &stat_buf);
 	size_t len = stat_buf.st_size;
-	auto input = std::unique_ptr<char>(new char[len + 1]());
+	auto input = std::unique_ptr<char>(new char[len + 1]);
+	*(input.get() + len) = '\0';
 	
 	for (int i = 0; std::cin.read(input.get() + i, BUF_SIZE); i += BUF_SIZE);
 	
