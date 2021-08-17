@@ -1,2 +1,1 @@
-# benchmarks
-benchmarks game
+Reverse complement sequence for benchmarks game.
